@@ -1,4 +1,4 @@
-FROM node:20-bookworm-slim
+FROM node:24-bookworm-slim
 
 RUN apt update && apt install -y curl bash sudo && \
     npm install -g npm@10.9.0 serverless@3.37.0 serverless-cloudflare-workers@1.1.0 serverless-offline@12.0.0
