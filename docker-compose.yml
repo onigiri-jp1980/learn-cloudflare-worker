@@ -3,12 +3,20 @@ services:
     build:
       context: .
       dockerfile: infrastructure/docker/app/Dockerfile
+      args:
+        - USER_NAME=${USER_NAME:-node}
+        - USER_ID=${USER_ID:-1000}
+        - GROUP_ID=${GROUP_ID:-1000}
     ports:
       - 3000:3000
     volumes:
       - ./src:/app
     env_file:
       - .env
+    environment:
+      - USER_NAME=${USER_NAME}
+      - USER_ID=${USER_ID}
+      - GROUP_ID=${GROUP_ID}
     working_dir: /app
     entrypoint: ["/bin/bash"]
     command: ["-i"]
