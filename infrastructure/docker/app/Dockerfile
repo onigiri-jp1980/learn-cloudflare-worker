@@ -4,9 +4,9 @@ ARG USER_ID
 ARG GROUP_ID
 
 RUN apt update && apt install -y curl bash sudo && \
-    pip install cloudflare-cli
-    #npm install -g npm@10.9.0 osls && \
-    #npm install -g npm@10.9.0 serverless@3.37.0 serverless-cloudflare-workers@1.1.0 serverless-offline@12.0.0 npx
+    pip install cloudflare-cli nodejs npm && \
+    npm install -g npm@10.9.0 osls && \
+    npm install -g npm@10.9.0 serverless@3.37.0 serverless-cloudflare-workers@1.1.0 serverless-offline@12.0.0 npx
 
 
 # 非rootユーザーで実行するために、nodeユーザーをsudoersに追加
