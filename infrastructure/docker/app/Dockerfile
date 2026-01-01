@@ -1,20 +1,31 @@
-FROM node:24-bookworm-slim
-ARG USER_NAME
-ARG USER_ID
-ARG GROUP_ID
+FROM ghcr.io/opentofu/opentofu:minimal AS tofu
 
-RUN apt update && apt install -y curl bash sudo && \
-    npm install -g npm@10.9.0 osls && \
-    #npm install -g npm@10.9.0 serverless@3.37.0 serverless-cloudflare-workers@1.1.0 serverless-offline@12.0.0 npx
+FROM python:3.14-slim AS base
+RUN set -xe && apt update && apt install -y adduser sudo curl make git
 
-
-# 非rootユーザーで実行するために、nodeユーザーをsudoersに追加
-RUN which bash && bash --version && cat /etc/passwd && \
-    echo "node ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers.d/node
-
-USER node
-COPY --chown=node:node ./src/package.json ./src/package-lock.json /app/src/
-COPY --chown=node:node ./src/serverless.yml /app
+FROM base AS builder
+ARG USER_ID=1000
+ARG GROUP_ID=1000
+ARG USER_NAME=oci
+ARG NODE_VERSION=24
+ARG FN_INSTALL_URL=https://raw.githubusercontent.com/fnproject/cli/master/install
+COPY --from=tofu /usr/local/bin/tofu /usr/local/bin/tofu
+RUN set -xe && \
+    curl -fsSL https://deb.nodesource.com/setup_${NODE_VERSION}.x | bash - && \
+    apt update && apt install -y nodejs && \
+    adduser --uid ${USER_ID} --home /home/${USER_NAME} ${USER_NAME} && \
+    echo "${USER_NAME} ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers.d/${USER_NAME} && \
+    mkdir -p /home/${USER_NAME}/.oci && \
+    chown -R ${USER_NAME}:root /home/${USER_NAME} && \
+    chmod -R 755 /home/${USER_NAME} && \
+    curl -LSs ${FN_INSTALL_URL} | sh && \
+    pip install --break-system-packages uv && \
+    npm install -g osls wrangler
+USER ${USER_NAME}
 WORKDIR /app
+
+COPY --chown=${USER_NAME}:root ./src/pyproject.toml ./src/pyproject.toml
+COPY --chown=${USER_NAME}:root ./infrastructure/docker/app/bashrc /home/${USER_NAME}/.bashrc
+RUN uv tool install workers-py && PATH="$PATH:/home/${USER_NAME}/.local/bin" uv run pywrangler init
 ENTRYPOINT ["/bin/bash"]
-CMD ["-i"]
+

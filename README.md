@@ -1,2 +1,2 @@
 # learn-cloudflare-worker
-CloudFlare workersにAPIをデプロイするのを勉強してます。
+CloudFlare workersにFastAPIをデプロイするのを勉強してます。
